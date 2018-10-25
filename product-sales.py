@@ -51,12 +51,32 @@ class ProductSales:
                                         names = ['ID', 'Date', 'Price', 'Quantity'])
 
                 # Left join the two dfs on 'ID', which will be set as the index
-                df = products_df.set_index('ID').join(sales_df.set_index('ID'))
+                self.df = products_df.set_index('ID').join(sales_df.set_index('ID'))
 
             except:
                 print("Error: No data found!")
 
+        print(type(self.df))
+        return self.df
+
+
+    def query_top_3_products(self):
+        """ Returns df with 3 columns: product name, cumulative revenue amount, 
+            and date. This df shows the top 3 products by cumulative revenue
+            (total sales over the product lifetime), and the date on which each 
+            of the top 3 products generated the most revenue.
+        """
+
+        df = self.get_df()
+
+        # Add revenue column (price per item times the quantity)
+        df['Rev'] = df['Price'] * df['Quantity']
+
+        df = df.groupby(['ID', 'Prod_Name', 'Date'])['Rev'].sum()
+
         return df
+
+
 
 #                                   Prod_Name        Date  Price  Quantity
 # ID
@@ -127,7 +147,7 @@ if __name__ == "__main__":
     import doctest
 
     ps = ProductSales()
-    print(ps.get_df())
+    print(ps.query_top_3_products())
 
 #     result = doctest.testmod()
 #     if result.failed == 0:
