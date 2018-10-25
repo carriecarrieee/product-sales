@@ -60,11 +60,9 @@ class ProductSales:
         return self.df
 
 
-    def query_top_3_products(self):
-        """ Returns df with 3 columns: product name, cumulative revenue amount, 
-            and date. This df shows the top 3 products by cumulative revenue
-            (total sales over the product lifetime), and the date on which each 
-            of the top 3 products generated the most revenue.
+    def get_top_3_products(self):
+        """ Returns the top 3 products by cumulative revenue (total sales over 
+            the product lifetime).
         """
 
         df = self.get_df()
@@ -72,75 +70,16 @@ class ProductSales:
         # Add revenue column (price per item times the quantity)
         df['Rev'] = df['Price'] * df['Quantity']
 
-        df = df.groupby(['ID', 'Prod_Name', 'Date'])['Rev'].sum()
+        # Sum up rev to get cumulative rev and group by product; sort to find
+        # the top 3 revenue-generating products.
+        df = df.groupby(['Prod_Name'])['Rev'] \
+               .sum() \
+               .reset_index() \
+               .set_index(['Prod_Name']) \
+               .sort_values('Rev', ascending=False)
 
-        return df
+        return df.iloc[:3]
 
-
-
-#                                   Prod_Name        Date  Price  Quantity
-# ID
-# 1                             Windswell IPA  2017-01-11  13.99         1
-# 1                             Windswell IPA  2017-03-09  13.99         1
-# 1                             Windswell IPA  2017-03-11  13.99         1
-# 1                             Windswell IPA  2017-02-05  13.99         1
-# 1                             Windswell IPA  2017-01-30  13.99         2
-# 1                             Windswell IPA  2017-01-09  13.99         2
-# 1                             Windswell IPA  2017-02-14  13.99         2
-# 1                             Windswell IPA  2017-03-07  13.99         2
-# 1                             Windswell IPA  2017-03-02  13.99         2
-# 1                             Windswell IPA  2017-03-19  13.99         1
-# 1                             Windswell IPA  2017-03-25  13.99         2
-# 1                             Windswell IPA  2017-03-17  13.99         2
-# 1                             Windswell IPA  2017-01-02  13.99         2
-# 1                             Windswell IPA  2017-02-11  13.99         1
-# 1                             Windswell IPA  2017-03-26  13.99         5
-# 1                             Windswell IPA  2017-01-05  13.99         1
-# 1                             Windswell IPA  2017-03-23  13.99         1
-# 1                             Windswell IPA  2017-02-10  13.99         3
-# 1                             Windswell IPA  2017-03-17  13.99         1
-# 1                             Windswell IPA  2017-01-15  13.99         6
-# 1                             Windswell IPA  2017-01-24  13.99         1
-# 1                             Windswell IPA  2017-03-30  13.99         2
-# 1                             Windswell IPA  2017-03-12  13.99         2
-# 1                             Windswell IPA  2017-03-05  13.99         8
-# 1                             Windswell IPA  2017-01-23  13.99         2
-# 1                             Windswell IPA  2017-03-28  13.99         2
-# 1                             Windswell IPA  2017-02-13  13.99         7
-# 1                             Windswell IPA  2017-01-05  13.99         2
-# 1                             Windswell IPA  2017-03-27  13.99         2
-# 1                             Windswell IPA  2017-01-27  13.99         5
-# ..                                      ...         ...    ...       ...
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-18   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-24   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-03-01   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-13   1.99         5
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-20   1.99         3
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-12   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-02   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-31   1.99         4
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-10   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-19   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-25   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-05   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-10   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-03-03   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-06   1.99         9
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-03-21   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-03   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-07   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-03-21   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-12   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-24   1.99         5
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-20   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-13   1.99         7
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-03-13   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-23   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-23   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-27   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-02-04   1.99         2
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-05   1.99         1
-# 11  Reese Witherspoon's All-Natural PB Cups  2017-01-16   1.99         1
 
 
 if __name__ == "__main__":
