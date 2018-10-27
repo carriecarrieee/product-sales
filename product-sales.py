@@ -41,7 +41,7 @@ class ProductSales:
         products_df = None
         sales_df = None
 
-        if not self.df:
+        if self.df is None:
             try:
                 products_df = pd.read_csv(self.products_url, sep=',', \
                                             names = ['ID', 'Prod_Name'])
@@ -56,13 +56,12 @@ class ProductSales:
             except:
                 print("Error: No data found!")
 
-        print(type(self.df))
         return self.df
 
 
-    def get_top_3_products(self):
-        """ Returns the top 3 products by cumulative revenue (total sales over 
-            the product lifetime).
+    def prep_data(self):
+        """ Returns a dataframe with analytical data ready to be used in 
+            subsequent functions.
         """
 
         df = self.get_df()
@@ -70,24 +69,71 @@ class ProductSales:
         # Add revenue column (price per item times the quantity)
         df['Rev'] = df['Price'] * df['Quantity']
 
-        # Sum up rev to get cumulative rev and group by product; sort to find
-        # the top 3 revenue-generating products.
-        df = df.groupby(['Prod_Name'])['Rev'] \
+        # Sum up rev on each day, remove ID, set prod name as index.
+        df = df.groupby(['ID','Prod_Name','Date'])['Rev'] \
                .sum() \
                .reset_index() \
-               .set_index(['Prod_Name']) \
-               .sort_values('Rev', ascending=False)
+               .set_index(['ID']) \
+               .sort_values(['Rev'], ascending=False)
 
-        return df.iloc[:3]
+        return df
+
+
+    def get_dates_df(self):
+        """ Returns new df that shows the dates for each product where the 
+            highest revenue was generated.
+        """
+
+        df = self.prep_data()
+        
+        # Takes the first row from each index group
+        df_dates = df.groupby(df.index).nth(0)
+
+        return df_dates
+
+
+    def get_cum_rev_df(self):
+        """ Returns new df that shows the top 3 products by their cumulative
+            revenue (total sales over the product lifetime.
+        """
+
+        df = self.prep_data()
+
+        # Show top 3 products by their cumulative revenue
+        df_cum_rev = df.groupby(['ID','Prod_Name'], sort=False)['Rev'] \
+                       .sum() \
+                       .reset_index() \
+                       .set_index(['ID']) \
+                       .sort_values(['Rev'], ascending=False) \
+                       .iloc[:3]
+
+        return df_cum_rev
+
+
+    def join_dfs(self):
+        """ Returns a combined df based on two dfs--one that shows dates on
+            which highest revenue was generated, and one that shows the top 3
+            products by cumulative revenue over the product lifetime.
+        """
+
+        df_dates = self.get_dates_df()
+        df_cum_rev = self.get_cum_rev_df()
+
+        # Perform inner join on the index with the two dfs
+        combined = df_cum_rev.join(df_dates, how="inner", lsuffix="_Cum")
+
+        # Keep only relevant columns, rename column header
+        final_df = combined[['Prod_Name','Rev_Cum','Date']] \
+                    .rename(columns={'Date': 'Date_of_Highest_Rev', \
+                                     'Rev_Cum': 'Cumulative_Rev'}) \
+                    .set_index('Prod_Name')
+
+        return final_df
 
 
 
 if __name__ == "__main__":
-    import doctest
 
     ps = ProductSales()
-    print(ps.query_top_3_products())
+    print(ps.join_dfs())
 
-#     result = doctest.testmod()
-#     if result.failed == 0:
-#         print("\nALL TESTS PASSED\n")
