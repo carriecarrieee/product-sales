@@ -16,6 +16,12 @@
     sale_date          DATE
     sale_price         DECIMAL(38, 2)
     quantity           INT
+
+
+    This program will output a dataframe with three columns: product name,
+    cumulative revenue amount (total sales over the product lifetime), and the
+    date on which the most revenue was generated.
+
 """
 
 import numpy as np
@@ -122,7 +128,7 @@ class ProductSales:
         # Perform inner join on the index with the two dfs
         combined = df_cum_rev.join(df_dates, how="inner", lsuffix="_Cum")
 
-        # Keep only relevant columns, rename column header
+        # Reorder and keep only relevant columns, rename column header
         final_df = combined[['Prod_Name','Rev_Cum','Date']] \
                     .rename(columns={'Date': 'Date_of_Highest_Rev', \
                                      'Rev_Cum': 'Cumulative_Rev'}) \
