@@ -30,11 +30,11 @@ import pandas as pd
 
 class ProductSales:
 
-    # products_url = "https://s3-us-west-1.amazonaws.com/circleup-engr-interview-public/product_sales/products.csv"
-    # sales_url = "https://s3-us-west-1.amazonaws.com/circleup-engr-interview-public/product_sales/sales.csv"
+    products_url = "https://s3-us-west-1.amazonaws.com/circleup-engr-interview-public/product_sales/products.csv"
+    sales_url = "https://s3-us-west-1.amazonaws.com/circleup-engr-interview-public/product_sales/sales.csv"
 
-    products_url = "data/products.csv"
-    sales_url = "data/sales.csv"
+    # products_url = "data/products.csv"
+    # sales_url = "data/sales.csv"
 
     def __init__(self):
         self.df = None
@@ -65,7 +65,7 @@ class ProductSales:
         return self.df
 
 
-    def prep_data(self):
+    def prep_data(self, df):
         """ Returns a dataframe with analytical data ready to be used in 
             subsequent functions.
         """
@@ -85,12 +85,10 @@ class ProductSales:
         return df
 
 
-    def get_dates_df(self):
+    def get_dates_df(self, df):
         """ Returns new df that shows the dates for each product where the 
             highest revenue was generated.
         """
-
-        df = self.prep_data()
         
         # Takes the first row from each index group
         df_dates = df.groupby(df.index).nth(0)
@@ -98,12 +96,10 @@ class ProductSales:
         return df_dates
 
 
-    def get_cum_rev_df(self):
+    def get_cum_rev_df(self, df):
         """ Returns new df that shows the top 3 products by their cumulative
             revenue (total sales over the product lifetime.
         """
-
-        df = self.prep_data()
 
         # Show top 3 products by their cumulative revenue
         df_cum_rev = df.groupby(['ID','Prod_Name'], sort=False)['Rev'] \
@@ -112,6 +108,13 @@ class ProductSales:
                        .set_index(['ID']) \
                        .sort_values(['Rev'], ascending=False) \
                        .iloc[:3]
+
+        # Round off floats in Rev column, convert to int, then format with 
+        # dollar sign and comma. 
+        # Round first because astype(int) will truncate the value of the decimal
+        df_cum_rev['Rev'] = df_cum_rev['Rev'].round() \
+                                             .astype(int) \
+                                             .map('$ {:,}'.format)
 
         return df_cum_rev
 
@@ -122,8 +125,10 @@ class ProductSales:
             products by cumulative revenue over the product lifetime.
         """
 
-        df_dates = self.get_dates_df()
-        df_cum_rev = self.get_cum_rev_df()
+        df = self.prep_data(self.get_df())
+
+        df_dates = self.get_dates_df(df)
+        df_cum_rev = self.get_cum_rev_df(df)
 
         # Perform inner join on the index with the two dfs
         combined = df_cum_rev.join(df_dates, how="inner", lsuffix="_Cum")
