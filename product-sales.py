@@ -60,7 +60,7 @@ class ProductSales:
                 self.df = products_df.set_index('ID').join(sales_df.set_index('ID'))
 
             except:
-                print("Error: No data found!")
+                raise Exception("Error: No data found!")
 
         return self.df
 
@@ -76,11 +76,13 @@ class ProductSales:
         df['Rev'] = df['Price'] * df['Quantity']
 
         # Sum up rev on each day, remove ID, set prod name as index.
-        df = df.groupby(['ID','Prod_Name','Date'])['Rev'] \
-               .sum() \
-               .reset_index() \
-               .set_index(['ID']) \
-               .sort_values(['Rev'], ascending=False)
+        df = (
+            df.groupby(['ID','Prod_Name','Date'])['Rev']
+            .sum()
+            .reset_index()
+            .set_index(['ID'])
+            .sort_values(['Rev'], ascending=False)
+        )
 
         return df
 
@@ -102,19 +104,23 @@ class ProductSales:
         """
 
         # Show top 3 products by their cumulative revenue
-        df_cum_rev = df.groupby(['ID','Prod_Name'], sort=False)['Rev'] \
-                       .sum() \
-                       .reset_index() \
-                       .set_index(['ID']) \
-                       .sort_values(['Rev'], ascending=False) \
-                       .iloc[:3]
+        df_cum_rev = (
+            df.groupby(['ID','Prod_Name'], sort=False)['Rev']
+            .sum()
+            .reset_index()
+            .set_index(['ID'])
+            .sort_values(['Rev'], ascending=False)
+            .iloc[:3]
+        )
 
         # Round off floats in Rev column, convert to int, then format with 
         # dollar sign and comma. 
         # Round first because astype(int) will truncate the value of the decimal
-        df_cum_rev['Rev'] = df_cum_rev['Rev'].round() \
-                                             .astype(int) \
-                                             .map('$ {:,}'.format)
+        df_cum_rev['Rev'] = (
+            df_cum_rev['Rev']
+            .round(2)
+            .map('$ {:,.2f}'.format)
+        )
 
         return df_cum_rev
 
@@ -134,10 +140,14 @@ class ProductSales:
         combined = df_cum_rev.join(df_dates, how="inner", lsuffix="_Cum")
 
         # Reorder and keep only relevant columns, rename column header
-        final_df = combined[['Prod_Name','Rev_Cum','Date']] \
-                    .rename(columns={'Date': 'Date_of_Highest_Rev', \
-                                     'Rev_Cum': 'Cumulative_Rev'}) \
-                    .set_index('Prod_Name')
+        final_df = (
+            combined[['Prod_Name','Rev_Cum','Date']]
+                .rename(
+                    columns={'Date': 'Date_of_Highest_Rev',
+                             'Rev_Cum': 'Cumulative_Rev'}
+                )
+                .set_index('Prod_Name')
+            )
 
         return final_df
 
