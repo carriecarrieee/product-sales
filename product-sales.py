@@ -59,8 +59,8 @@ class ProductSales:
                 # Left join the two dfs on 'ID', which will be set as the index
                 self.df = products_df.set_index('ID').join(sales_df.set_index('ID'))
 
-            except:
-                raise Exception("Error: No data found!")
+            except Exception as ex:
+                raise Exception("Error loading data from " + url) from ex
 
         return self.df
 
@@ -113,9 +113,8 @@ class ProductSales:
             .iloc[:3]
         )
 
-        # Round off floats in Rev column, convert to int, then format with 
-        # dollar sign and comma. 
-        # Round first because astype(int) will truncate the value of the decimal
+        # Round off floats in Rev column to preserve more accuracy, then format
+        # with dollar sign, comma, to 2 decimal places.
         df_cum_rev['Rev'] = (
             df_cum_rev['Rev']
             .round(2)
